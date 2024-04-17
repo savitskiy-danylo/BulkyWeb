@@ -1,20 +1,20 @@
-﻿using Bulky.DataAccess.Data;
+﻿using Bulky.DataAccess.Repository.IRepository;
 using Bulky.Models;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BulkyWeb.Controllers;
+namespace BulkyWeb.Areas.Admin.Controllers;
 
+[Area("Admin")]
 public class CategoryController : Controller
 {
-  private readonly ApplicationDbContext _db;
-  public CategoryController(ApplicationDbContext db)
+  private readonly IUnitOfWork _uow;
+  public CategoryController(IUnitOfWork uow)
   {
-    _db = db;
-
+    _uow = uow;
   }
   public IActionResult Index()
   {
-    var objCategoryList = _db.Categories.ToList();
+    var objCategoryList = _uow.Category.GetAll();
     return View(objCategoryList);
   }
 
@@ -28,8 +28,8 @@ public class CategoryController : Controller
   {
     if (ModelState.IsValid)
     {
-      _db.Categories.Add(category);
-      _db.SaveChanges();
+      _uow.Category.Add(category);
+      _uow.Save();
       TempData["success"] = "Category created successfully";
       return RedirectToAction("Index");
     }
@@ -41,7 +41,7 @@ public class CategoryController : Controller
     if (id == null || id == 0)
       return NotFound();
 
-    var category = _db.Categories.Find(id);
+    var category = _uow.Category.Get(x => x.Id == id);
 
     if (category == null)
       return NotFound();
@@ -54,8 +54,8 @@ public class CategoryController : Controller
   {
     if (ModelState.IsValid)
     {
-      _db.Categories.Update(category);
-      _db.SaveChanges();
+      _uow.Category.Update(category);
+      _uow.Save();
       TempData["success"] = "Category updated successfully";
       return RedirectToAction("Index");
     }
@@ -67,7 +67,7 @@ public class CategoryController : Controller
     if (id == null || id == 0)
       return NotFound();
 
-    var category = _db.Categories.Find(id);
+    var category = _uow.Category.Get(x => x.Id == id);
 
     if (category == null)
       return NotFound();
@@ -78,13 +78,13 @@ public class CategoryController : Controller
   [HttpPost, ActionName("Delete")]
   public IActionResult DeletePOST(int? id)
   {
-    Category? category = _db.Categories.Find(id);
+    var category = _uow.Category.Get(x => x.Id == id);
 
     if (category == null)
       return NotFound();
 
-    _db.Categories.Remove(category);
-    _db.SaveChanges();
+    _uow.Category.Remove(category);
+    _uow.Save();
     TempData["success"] = "Category deleted successfully";
     return RedirectToAction("Index");
   }
